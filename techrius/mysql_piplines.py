@@ -33,6 +33,7 @@ def create_table(logger):
             user=db_user,
             password=db_password,
             database=db_name,
+            port=25060,
             cursorclass=pymysql.cursors.DictCursor
         ) as connection:
             create_projects_table_query = """
@@ -136,6 +137,7 @@ def insert_data(creators, projects, updates, comments, rewards, logger):
             user=db_user,
             password=db_password,
             database=db_name,
+            port=25060,
             cursorclass=pymysql.cursors.DictCursor
         ) as connection:
             insert_creators_query = """
