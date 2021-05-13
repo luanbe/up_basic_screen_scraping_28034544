@@ -33,7 +33,7 @@ class TSpider:
         website_default_url: str= None,
         page_delay: int = 25,
         action_delay: tuple = (1,3),
-        request_delay: tuple = (5,15),
+        request_delay: tuple = (10,20),
         batch_analysis_limit: int = 200,
         save_data_limit: int = 100,
         show_logs: bool = True,
