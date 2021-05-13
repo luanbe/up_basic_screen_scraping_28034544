@@ -1,0 +1,23 @@
+[
+    {
+        "category_name": "crafts",
+        "id": 26,
+        "page": 3,
+        "project_id": 4123530,
+        "limit_page": false
+    },
+    {
+        "category_name": "dance",
+        "id": 6,
+        "page": 50,
+        "project_id": null,
+        "limit_page": false
+    },
+    {
+        "category_name": "music",
+        "id": 14,
+        "page": 50,
+        "project_id": null,
+        "limit_page": false
+    }
+]

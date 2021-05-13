@@ -1,0 +1,23 @@
+[
+    {
+        "category_name": "film",
+        "id": 11,
+        "page": 50,
+        "project_id": null,
+        "limit_page": false
+    },
+    {
+        "category_name": "food",
+        "id": 10,
+        "page": 3,
+        "project_id": 4179281,
+        "limit_page": false
+    },
+    {
+        "category_name": "Fashion",
+        "id": 9,
+        "page": 1,
+        "project_id": null,
+        "limit_page": false
+    }
+]

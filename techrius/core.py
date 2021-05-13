@@ -33,7 +33,7 @@ class TSpider:
         website_default_url: str= None,
         page_delay: int = 25,
         action_delay: tuple = (1,3),
-        request_delay: tuple = (10,20),
+        request_delay: tuple = (1,3),
         batch_analysis_limit: int = 200,
         save_data_limit: int = 100,
         show_logs: bool = True,
@@ -45,7 +45,8 @@ class TSpider:
         headless_browser: bool = True,
         disable_image_load: bool = True,
         geckodriver_log_level: str = "info",  # "info" by default
-        folder_data: str = 'data'
+        folder_data: str = 'data',
+        json_file: str= None,
     ):
         self.page_delay = page_delay
         self.website_default_url = website_default_url
@@ -62,6 +63,7 @@ class TSpider:
         self.geckodriver_log_level = geckodriver_log_level
         self.show_logs = show_logs
         self.folder_data = 'data/'
+        self.json_file = json_file
 
 
         if website_name is None:
@@ -440,13 +442,13 @@ class TSpider:
                                 else:
                                     rewards_list = None
                                 
-                                json = load_json_file('./assets/jsons/projects.json')
+                                json = load_json_file(f'./assets/jsons/{self.json_file}')
                                 if json:
                                     for data in json:
                                         if data['id'] == category_id:
                                             data['page'] = current_page
                                             data['project_id'] = project_id
-                                    update_json_file('./assets/jsons/projects.json', json)
+                                    update_json_file(f'./assets/jsons/{self.json_file}', json)
                                 insert_data(creators_list, results_list, updates_list, comments_list, rewards_list, self.logger)
                                 item_count += 1
                                 self.logger.info(f'Website crawl total: {item_count} | Current pages: {current_page}')
