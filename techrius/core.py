@@ -294,6 +294,7 @@ class TSpider:
         api_session = self.api_session()
         project_id = None
         item_count = 0
+        page_now = None
         reach_limit_page = False
         while True:
             has_more = None
@@ -439,6 +440,7 @@ class TSpider:
                                 else:
                                     rewards_list = None
                                 
+                                insert_data(creators_list, results_list, updates_list, comments_list, rewards_list, self.logger)
                                 json = load_json_file(f'./assets/jsons/{self.json_file}')
                                 if json:
                                     for data in json:
@@ -446,7 +448,9 @@ class TSpider:
                                             data['page'] = current_page
                                             data['project_id'] = project_id
                                     update_json_file(f'./assets/jsons/{self.json_file}', json)
-                                insert_data(creators_list, results_list, updates_list, comments_list, rewards_list, self.logger)
+                               
+                                page_now = current_page
+                                
                                 item_count += 1
                                 self.logger.info(f'Website crawl total: {item_count} | Current pages: {current_page}')
                             else:
@@ -462,7 +466,7 @@ class TSpider:
             else:
                 self.logger.info('Can\'t fix error: HTTP Response Error')
                 break
-        return current_page, reach_limit_page, project_id
+        return page_now, reach_limit_page, project_id
 
 
     def crawl_details(self, api_session, url, url_reward, url_api_user, slug, full_slug, project_id):

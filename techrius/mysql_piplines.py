@@ -3,9 +3,9 @@ from pymysql import Error, DataError
 from pymysql import connect
 
 
-db_host = 'kickstarter-do-user-3082533-0.b.db.ondigitalocean.com'
-db_user = 'doadmin'
-db_password = 'dkm9zbob1m3c802s'
+db_host = 'localhost'
+db_user = 'webscraping'
+db_password = 'Z19874149'
 db_name = 'kickstarter'
 
 
@@ -16,7 +16,6 @@ def create_database(logger):
             host=db_host,
             user=db_user,
             password=db_password,
-            port=25060,
             cursorclass=pymysql.cursors.DictCursor
         ) as connection:
             create_db_query = f"CREATE DATABASE IF NOT EXISTS {db_name}"
@@ -33,7 +32,6 @@ def create_table(logger):
             user=db_user,
             password=db_password,
             database=db_name,
-            port=25060,
             cursorclass=pymysql.cursors.DictCursor
         ) as connection:
             create_projects_table_query = """
@@ -137,7 +135,6 @@ def insert_data(creators, projects, updates, comments, rewards, logger):
             user=db_user,
             password=db_password,
             database=db_name,
-            port=25060,
             cursorclass=pymysql.cursors.DictCursor
         ) as connection:
             insert_creators_query = """
