@@ -33,7 +33,7 @@ class TSpider:
         website_default_url: str= None,
         page_delay: int = 25,
         action_delay: tuple = (1,3),
-        request_delay: tuple = (10,20),
+        request_delay: tuple = (3,5),
         batch_analysis_limit: int = 200,
         save_data_limit: int = 100,
         show_logs: bool = True,
@@ -98,10 +98,9 @@ class TSpider:
         self.logger = self.get_logger(self.show_logs)
 
         self.headers = {
-            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+            'accept': 'application/json, text/javascript, */*; q=0.01',
             'accept-encoding': 'gzip, deflate, br',
             'accept-language': 'en,vi;q=0.9,en-US;q=0.8',
-            'user-agent': self.user_agent
         }
         
         # self.browser = set_selenium_session(
@@ -161,7 +160,8 @@ class TSpider:
         save_cookie(self.browser, self.website_name, self.logger)
         return status_fix
 
-    def try_request(self, session, method, url, payloads=None, type_name='default'):
+    def try_request(self, session, method, url, payloads=None, type_name='default',headers=None):
+        random_sleep(self.request_delay, self.logger)
         rstatus = False
         while True:
             if method == 'get':
@@ -187,37 +187,47 @@ class TSpider:
 
 
     def api_session(self):
-        cookie_file_path = f'assets/cookies/{self.website_name}.pkl'
-        if os.path.isfile(cookie_file_path):
-            cookies = pickle.load(open(cookie_file_path, "rb"))
-            jar = requests.cookies.RequestsCookieJar()
-            for cookie in cookies:
-                if isinstance(cookie.get('expiry'), float): #Checks if the instance expiry a float 
-                    cookie['expiry'] = int(cookie['expiry']) # it converts expiry cookie to a int 
+        # cookie_file_path = f'assets/cookies/{self.website_name}.pkl'
+        # if os.path.isfile(cookie_file_path):
+        #     cookies = pickle.load(open(cookie_file_path, "rb"))
+        #     jar = requests.cookies.RequestsCookieJar()
+        #     for cookie in cookies:
+        #         if isinstance(cookie.get('expiry'), float): #Checks if the instance expiry a float 
+        #             cookie['expiry'] = int(cookie['expiry']) # it converts expiry cookie to a int 
 
-                jar.set(
-                        cookie.get('name'),
-                        cookie.get('value'),
-                        domain=cookie.get('domain'),
-                        path=cookie.get('path'),
-                        secure=cookie.get('secure'),
-                        rest={'HttpOnly': cookie.get('httpOnly')},
-                        expires=cookie.get('expiry'),
-                    )
-            self.logger.info('Requests package | API Session load cookies')
-            session = requests.Session()
-            if self.proxy_username and self.proxy_password and self.proxy_address and self.proxy_port:
-                proxies = {
-                    'http': f'http://{self.proxy_username}:{self.proxy_password}@{self.proxy_address}:{self.proxy_port}'
-                }
-                session.proxies.update(proxies)
-            # session.cookies = jar
-            session.headers.update(self.headers)
-            data = session.get('http://extreme-ip-lookup.com/json/')
-            self.logger.info(f'IP:{data.json()["query"]} | Country:{data.json()["country"]} | City:{data.json()["city"]} | State: {data.json()["continent"]}| ipType: {data.json()["ipType"]}')
-            return session
-        else:
-            return False
+        #         jar.set(
+        #                 cookie.get('name'),
+        #                 cookie.get('value'),
+        #                 domain=cookie.get('domain'),
+        #                 path=cookie.get('path'),
+        #                 secure=cookie.get('secure'),
+        #                 rest={'HttpOnly': cookie.get('httpOnly')},
+        #                 expires=cookie.get('expiry'),
+        #             )
+        #     self.logger.info('Requests package | API Session load cookies')
+        #     session = requests.Session()
+        #     if self.proxy_username and self.proxy_password and self.proxy_address and self.proxy_port:
+        #         proxies = {
+        #             'http': f'http://{self.proxy_username}:{self.proxy_password}@{self.proxy_address}:{self.proxy_port}'
+        #         }
+        #         session.proxies.update(proxies)
+        #     # session.cookies = jar
+        #     session.headers.update(self.headers)
+        #     data = session.get('http://extreme-ip-lookup.com/json/')
+        #     self.logger.info(f'IP:{data.json()["query"]} | Country:{data.json()["country"]} | City:{data.json()["city"]} | State: {data.json()["continent"]}| ipType: {data.json()["ipType"]}')
+        #     return session
+        # else:
+        #     return False
+        session = requests.Session()
+        if self.proxy_username and self.proxy_password and self.proxy_address and self.proxy_port:
+            proxies = {
+                'http': f'http://{self.proxy_username}:{self.proxy_password}@{self.proxy_address}:{self.proxy_port}'
+            }
+            session.proxies.update(proxies)
+        session.headers = self.headers
+        data = session.get('http://extreme-ip-lookup.com/json/')
+        self.logger.info(f'IP:{data.json()["query"]} | Country:{data.json()["country"]} | City:{data.json()["city"]} | State: {data.json()["continent"]}| ipType: {data.json()["ipType"]}')
+        return session
 
     def session_load(self):
         self.logger.info('### SESSION LOAD ###')
@@ -280,17 +290,18 @@ class TSpider:
 
     def crawl_pages(self, category_id, current_page, current_project_id):
         api_session = self.api_session()
-
+        project_id = None
         item_count = 0
         reach_limit_page = False
         while True:
-            project_id = None
             has_more = None
             #### Scrape categories ######
-            api_session.headers.update({
+            headers={
                 'accept': 'application/json, text/javascript, */*; q=0.01',
-                'x-requested-with': 'XMLHttpRequest'
-            })
+                'x-requested-with': 'XMLHttpRequest',
+            }
+            api_session.headers = headers
+            
             url = f'https://www.kickstarter.com/discover/advanced?google_chrome_workaround&category_id={category_id}&sort=magic&seed=2701536&page={current_page}'
             
             r = self.try_request(session=api_session, method='get', url=url, type_name='Crawl List Projects')
@@ -308,7 +319,7 @@ class TSpider:
                         project_count = 0
                         if current_project_id:
                             for project in projects:
-                                project_id = project_id = project.get('profile').get('project_id')
+                                project_id = project.get('profile').get('project_id')
                                 if project_id == current_project_id:
                                     project_id = current_project_id
                                     break
@@ -429,13 +440,13 @@ class TSpider:
                                 else:
                                     rewards_list = None
                                 
-                                json = load_json_file('./assets/jsons/accounts.json')
+                                json = load_json_file('./assets/jsons/projects.json')
                                 if json:
                                     for data in json:
                                         if data['id'] == category_id:
                                             data['page'] = current_page
                                             data['project_id'] = project_id
-                                    update_json_file('./assets/jsons/accounts.json', json)
+                                    update_json_file('./assets/jsons/projects.json', json)
                                 insert_data(creators_list, results_list, updates_list, comments_list, rewards_list, self.logger)
                                 item_count += 1
                                 self.logger.info(f'Website crawl total: {item_count} | Current pages: {current_page}')
@@ -458,7 +469,7 @@ class TSpider:
     def crawl_details(self, api_session, url, url_reward, url_api_user, slug, full_slug, project_id):
         url_api = 'https://www.kickstarter.com/graph'
 
-        api_session.headers.update(self.headers)
+        api_session.headers = self.headers 
         # Send the request for getting CSRF token
         r_html = self.try_request(session=api_session, method='get', url=url, type_name='Getting CSRF token')
         if r_html:
@@ -493,7 +504,6 @@ class TSpider:
                 }
             },
         ]
-
         request = self.try_request(session=session, method='post', url=url_api, payloads=json.dumps(payloads), type_name='Crawl Creator')
         if request:
             data = request.json()
@@ -544,7 +554,6 @@ class TSpider:
                 }
             },
         ]
-
         request = self.try_request(session=session, method='post', url=url_api, payloads=json.dumps(payloads), type_name='Crawl Story')
         if request:
             data = request.json()
@@ -576,7 +585,6 @@ class TSpider:
                     }
                 },
             ]
-
             request = self.try_request(session=session, method='post', url=url_api, payloads=json.dumps(payloads), type_name='Crawl Updates')
             if request:
                 data = request.json()
@@ -633,7 +641,6 @@ class TSpider:
         
         # Find commend ID
         session.headers.update(self.headers)
-
         r_html = self.try_request(session=session, method='get', url=url, type_name='Find Comment ID')
 
         commend_id = None

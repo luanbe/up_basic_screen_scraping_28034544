@@ -21,8 +21,10 @@ def smart_run(session):
         session.session_quit()
         pass
 
-def random_sleep(random_time):
+def random_sleep(random_time, logger=None):
     action_time = random.randint(random_time[0], random_time[1])
+    if logger:
+        logger.info(f'Sleep in ({action_time}) second....')
     time.sleep(action_time)
     return action_time
 
