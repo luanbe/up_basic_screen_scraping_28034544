@@ -50,7 +50,7 @@ if __name__ == '__main__':
         if data['limit_page'] is False:
             thread_name = data['category_name']
             print(f"Begin to start and create thread: {thread_name}")
-            x = threading.Thread(target=crawl_data, args=(data['id'], data['category_name'], data['page'], data['project_id']), daemon=False)
+            x = threading.Thread(target=crawl_data, args=(data['id'], data['category_name'], data['page'], data['project_id']), daemon=True)
             threads.append(x)
             x.start()
 
