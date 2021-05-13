@@ -309,9 +309,6 @@ class TSpider:
             r = self.try_request(session=api_session, method='get', url=url, type_name='Crawl List Projects')
             if r:
                 if r.status_code == 200:
-                    if current_page == 50:
-                        print('GET DATA FOR TESTING')
-                        break
                     json_data = r.json()
                     has_more = json_data.get('has_more')
                     projects = json_data.get('projects')

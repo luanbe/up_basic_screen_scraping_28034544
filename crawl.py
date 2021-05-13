@@ -47,7 +47,7 @@ def crawl_data(category_id, category_name, current_page, project_id, json_file):
  
 
 if __name__ == '__main__':
-    json_file = 'projects_1.json'
+    json_file = 'projects_2.json'
     json = load_json_file(f'./assets/jsons/{json_file}')
     threads = list()
     for data in json:
