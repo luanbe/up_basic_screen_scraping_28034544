@@ -9,38 +9,38 @@ import random
 def crawl_data(category_id, category_name, current_page, project_id):
     
     while True:
-        # try:
-        session = TSpider(
-            website_name=f'kickstarter_{category_name}',
-            website_default_url='https://www.kickstarter.com/',
-            headless_browser=True,
-            proxy_username='keipavqn',
-            proxy_password='AlK0chgA9pwjUYu7',
-            proxy_address='3.224.74.126',
-            proxy_port='31112',
-            # user_agent=random_user_agent(),
-            page_delay=50)
-        
-        crawl = session.crawl_pages(category_id, current_page, project_id)
+        try:
+            session = TSpider(
+                website_name=f'kickstarter_{category_name}',
+                website_default_url='https://www.kickstarter.com/',
+                headless_browser=True,
+                proxy_username='keipavqn',
+                proxy_password='AlK0chgA9pwjUYu7',
+                proxy_address='3.224.74.126',
+                proxy_port='31112',
+                # user_agent=random_user_agent(),
+                page_delay=50)
+            
+            crawl = session.crawl_pages(category_id, current_page, project_id)
 
-        current_page = crawl[0]
-        limit_page = crawl[1]
-        project_id = crawl[2]
-        json = load_json_file('./assets/jsons/projects.json')
-        if json:
-            for data in json:
-                if data['id'] == category_id:
-                    data['page'] = current_page
-                    data['limit_page'] = limit_page
-                    data['project_id'] = project_id
-            update_json_file('./assets/jsons/projects.json', json)
+            current_page = crawl[0]
+            limit_page = crawl[1]
+            project_id = crawl[2]
+            json = load_json_file('./assets/jsons/projects.json')
+            if json:
+                for data in json:
+                    if data['id'] == category_id:
+                        data['page'] = current_page
+                        data['limit_page'] = limit_page
+                        data['project_id'] = project_id
+                update_json_file('./assets/jsons/projects.json', json)
 
-        # When reach to limit page
-        if limit_page:
-            break
-        # except:
-        #     print('=============HAVE SOME ERROR | SLEEP 50\'s================')
-        #     sleep(50)
+            # When reach to limit page
+            if limit_page:
+                break
+        except:
+            print('=============HAVE SOME ERROR | SLEEP 50\'s================')
+            sleep(50)
  
 
 if __name__ == '__main__':
