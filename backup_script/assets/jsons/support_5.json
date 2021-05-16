@@ -1,0 +1,23 @@
+[
+    {
+        "category_name": "film",
+        "id": 11,
+        "page": 1,
+        "project_id": 1666826,
+        "limit_page": false
+    },
+    {
+        "category_name": "game",
+        "id": 12,
+        "page": 1,
+        "project_id": null,
+        "limit_page": false
+    },
+    {
+        "category_name": "photography",
+        "id": 15,
+        "page": 3,
+        "project_id": 4215689,
+        "limit_page": false
+    }
+]

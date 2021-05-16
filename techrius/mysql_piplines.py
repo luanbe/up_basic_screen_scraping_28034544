@@ -1,12 +1,17 @@
 import pymysql.cursors
-from pymysql import Error, DataError
+from pymysql import Error
 from pymysql import connect
 
 
+# db_host = '207.148.66.216'
+# db_user = 'support_4'
+# db_password = 'Zipphong18091987@@'
+# db_name = 'kickstarter_com'
+
 db_host = 'localhost'
 db_user = 'webscraping'
-db_password = 'Z19874149'
-db_name = 'kickstarter'
+db_password = 'Zipphong18091987@@'
+db_name = 'kickstarter_com'
 
 
 def create_database(logger):
@@ -22,7 +27,7 @@ def create_database(logger):
             with connection.cursor() as cursor:
                 cursor.execute(create_db_query)
     except Error as e:
-        print(e)
+        raise ValueError(e)
 
 def create_table(logger):
     # Create database and table if it is not exist
@@ -41,7 +46,9 @@ def create_table(logger):
                     blurb VARCHAR(500),
                     feature_image TEXT,
                     category VARCHAR(100),
+                    category_id INT,
                     parent_category VARCHAR(100),
+                    parent_category_id INT,
                     currency VARCHAR(5),
                     pledged INT,
                     goal INT,
@@ -127,7 +134,7 @@ def create_table(logger):
         print(e)
 
 
-def insert_data(creators, projects, updates, comments, rewards, logger):
+def insert_data(creator, project, updates, comments, rewards, logger):
     # Create database and table if it is not exist
     try:
         with connect(
@@ -158,7 +165,9 @@ def insert_data(creators, projects, updates, comments, rewards, logger):
                     blurb,
                     feature_image,
                     category,
+                    category_id,
                     parent_category,
+                    parent_category_id,
                     currency,
                     pledged,
                     goal,
@@ -171,7 +180,7 @@ def insert_data(creators, projects, updates, comments, rewards, logger):
                     url,
                     story
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """
             insert_updates_query = """
                 INSERT INTO updates(
@@ -212,26 +221,24 @@ def insert_data(creators, projects, updates, comments, rewards, logger):
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """
             with connection.cursor() as cursor:
-                if creators:
+                if creator:
                     list_creators = []
-                    for creator in creators:
-                        creator_id = creator['creator_id']
-
-                        cursor.execute(f'SELECT creator_id FROM creators WHERE creator_id="{creator_id}"')
-                        if not cursor.fetchall():
-                            list_creators.append((
-                                creator_id,
-                                creator['name'],
-                                creator['verified_name'],
-                                creator['slug'],
-                                creator['location'],
-                                creator['project'],
-                                creator['backed_project'],
-                                creator['join_date'],
-                                creator['biography']
-                            ))
-                        else:
-                            logger.info(f'Creator ID {creator_id} is exist')
+                    creator_id = creator['creator_id']
+                    cursor.execute(f'SELECT creator_id FROM creators WHERE creator_id="{creator_id}"')
+                    if not cursor.fetchall():
+                        list_creators.append((
+                            creator_id,
+                            creator['name'],
+                            creator['verified_name'],
+                            creator['slug'],
+                            creator['location'],
+                            creator['project'],
+                            creator['backed_project'],
+                            creator['join_date'],
+                            creator['biography']
+                        ))
+                    else:
+                        logger.info(f'Creator ID {creator_id} is exist')
                     if list_creators:
                             cursor.executemany(insert_creators_query, list_creators)
                             connection.commit()
@@ -239,34 +246,35 @@ def insert_data(creators, projects, updates, comments, rewards, logger):
                     else:
                         logger.info(f'None list creator to insert database')
 
-                if projects:
+                if project:
                     list_projects = []
-                    for project in projects:
-                        project_id = project['project_id']
+                    project_id = project['project_id']
 
-                        cursor.execute(f'SELECT project_id FROM projects WHERE project_id="{project_id}"')
-                        if not cursor.fetchall():
-                            list_projects.append((
-                                project_id,
-                                project['title'],
-                                project['blurb'],
-                                project['feature_image'],
-                                project['category'],
-                                project['parent_category'],
-                                project['currency'],
-                                project['pledged'],
-                                project['goal'],
-                                project['backers'],
-                                project['day_to_go'],
-                                project['launched'],
-                                project['deadline'],
-                                project['location'],
-                                project['creator_id'],
-                                project['url'],
-                                project['story'],
-                            ))
-                        else:
-                            logger.info(f'Project ID {project_id} is exist')
+                    cursor.execute(f'SELECT project_id FROM projects WHERE project_id="{project_id}"')
+                    if not cursor.fetchall():
+                        list_projects.append((
+                            project_id,
+                            project['title'],
+                            project['blurb'],
+                            project['feature_image'],
+                            project['category'],
+                            project['category_id'],
+                            project['parent_category'],
+                            project['parent_category_id'],
+                            project['currency'],
+                            project['pledged'],
+                            project['goal'],
+                            project['backers'],
+                            project['day_to_go'],
+                            project['launched'],
+                            project['deadline'],
+                            project['location'],
+                            project['creator_id'],
+                            project['url'],
+                            project['story'],
+                        ))
+                    else:
+                        logger.info(f'Project ID {project_id} is exist')
                     if list_projects:
                             cursor.executemany(insert_projects_query, list_projects)
                             connection.commit()

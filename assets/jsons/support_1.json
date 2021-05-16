@@ -1,0 +1,23 @@
+[
+    {
+        "category_name": "art",
+        "id": 1,
+        "page": 1,
+        "project_id": 1826321,
+        "limit_page": false
+    },
+    {
+        "category_name": "publishing",
+        "id": 18,
+        "page": 1,
+        "project_id": 4145973,
+        "limit_page": false
+    },
+    {
+        "category_name": "theater",
+        "id": 17,
+        "page": 1,
+        "project_id": 236840,
+        "limit_page": false
+    }
+]

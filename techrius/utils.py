@@ -9,6 +9,7 @@ from sys import exit as clean_exit
 from contextlib import contextmanager
 from random_user_agent.user_agent import UserAgent
 from random_user_agent.params import SoftwareName, OperatingSystem, HardwareType, SoftwareType, Popularity
+from bs4 import BeautifulSoup
 
 @contextmanager
 def smart_run(session):
@@ -19,7 +20,6 @@ def smart_run(session):
         clean_exit("You have exited successfully.")
     finally:
         session.session_quit()
-        pass
 
 def random_sleep(random_time, logger=None):
     action_time = random.randint(random_time[0], random_time[1])
@@ -28,26 +28,29 @@ def random_sleep(random_time, logger=None):
     time.sleep(action_time)
     return action_time
 
-def load_cookie(browser, website_name, logger):
-    cookie_file_path = f'assets/cookies/{website_name}.pkl'
+def load_cookie(browser, url, spider_name, logger):
+    cookie_file_path = f'assets/cookies/{spider_name}.pkl'
     try:
         logger.info(f'Loading cookie file {cookie_file_path}')
         cookies = pickle.load(open(cookie_file_path, "rb"))
         browser.delete_all_cookies()
-        # browser.get('https://www.google.com')
+
         # have to be on a page before you can add any cookies, any page - does not matter which
+        browser.get(url)
+        
         for cookie in cookies:
             if isinstance(cookie.get('expiry'), float): #Checks if the instance expiry a float 
                 cookie['expiry'] = int(cookie['expiry']) # it converts expiry cookie to a int 
             browser.add_cookie(cookie)
+        time.sleep(10)
         browser.refresh()
         return True
     except IOError:
         logger.info(f'Not find cookie file at {cookie_file_path}')
         return False
 
-def save_cookie(browser, website_name, logger):
-    cookie_file_path = f'assets/cookies/{website_name}.pkl'
+def save_cookie(browser, spider_name, logger):
+    cookie_file_path = f'assets/cookies/{spider_name}.pkl'
     pickle.dump(browser.get_cookies() , open(cookie_file_path,"wb"))
     logger.info(f'Saved cookie file at {cookie_file_path}')
     time.sleep(10)
@@ -103,3 +106,11 @@ def random_user_agent():
                                    software_names=software_names, operating_systems=operating_systems, popularity=popularity, limit=100)
 
     return user_agent_rotator.get_random_user_agent()
+
+def convert_html_to_text(html_data):
+    soup = BeautifulSoup(html_data, 'lxml')
+    return soup.text.strip()
+
+def convert_html_to_json(html_data, browser):
+    content = browser.find_element_by_tag_name('pre').text
+    return json.loads(content)
