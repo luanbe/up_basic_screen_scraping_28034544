@@ -1,17 +1,13 @@
 import pymysql.cursors
 from pymysql import Error
 from pymysql import connect
+from .utils import remove_special_characters
+import settings
 
-
-# db_host = '207.148.66.216'
-# db_user = 'support_4'
-# db_password = 'Zipphong18091987@@'
-# db_name = 'kickstarter_com'
-
-db_host = 'localhost'
-db_user = 'webscraping'
-db_password = 'Zipphong18091987@@'
-db_name = 'kickstarter_com'
+db_host = settings.db_host
+db_user = settings.db_user
+db_password = settings.db_password
+db_name = settings.db_name
 
 
 def create_database(logger):
@@ -123,15 +119,30 @@ def create_table(logger):
                     FOREIGN KEY (project_id) REFERENCES projects(project_id)
                 )
                 """
+            create_crawl_status_table_query = """
+                CREATE TABLE crawl_status(
+                    crawl_id INT NOT NULL AUTO_INCREMENT,
+                    category_id INT,
+                    parent_category_id INT,
+                    category_name VARCHAR(100),
+                    state VARCHAR(50),
+                    page_number INT,
+                    project_id INT,
+                    limit_status BOOLEAN,
+                    crawler VARCHAR(50),
+                    PRIMARY KEY (crawl_id)
+                )
+                """
             with connection.cursor() as cursor:
                 cursor.execute(create_creators_table_query)
                 cursor.execute(create_projects_table_query)
                 cursor.execute(create_updates_table_query)
                 cursor.execute(create_comments_table_query)
                 cursor.execute(create_rewards_table_query)
+                cursor.execute(create_crawl_status_table_query)
                 connection.commit()
     except Error as e:
-        print(e)
+        logger.error(f'MYSQL error: {e}')
 
 
 def insert_data(creator, project, updates, comments, rewards, logger):
@@ -252,10 +263,24 @@ def insert_data(creator, project, updates, comments, rewards, logger):
 
                     cursor.execute(f'SELECT project_id FROM projects WHERE project_id="{project_id}"')
                     if not cursor.fetchall():
+                        if project['title']:
+                            title = remove_special_characters(project['title'])
+                        else:
+                            title = None
+                        
+                        if project['blurb']:
+                            blurb = remove_special_characters(str(project['blurb']))
+                        else:
+                            blurb = None
+
+                        if project['story']:
+                            story = remove_special_characters(project['story'])
+                        else:
+                            story = None
                         list_projects.append((
                             project_id,
-                            project['title'],
-                            project['blurb'],
+                            title,
+                            blurb,
                             project['feature_image'],
                             project['category'],
                             project['category_id'],
@@ -271,7 +296,7 @@ def insert_data(creator, project, updates, comments, rewards, logger):
                             project['location'],
                             project['creator_id'],
                             project['url'],
-                            project['story'],
+                            story,
                         ))
                     else:
                         logger.info(f'Project ID {project_id} is exist')
@@ -286,16 +311,29 @@ def insert_data(creator, project, updates, comments, rewards, logger):
                     list_updates = []
                     for up_date in updates:
                         project_id = up_date['project_id']
-                        title = up_date['title']
+                        if up_date['title']:
+                            title = remove_special_characters(up_date['title'])
+                        else:
+                            title = None
+                        
+                        if up_date['body']:
+                            body = remove_special_characters(up_date['body'])
+                        else:
+                            body = None
+
+                        if up_date['author']:
+                            author = remove_special_characters(up_date['author'])
+                        else:
+                            author = None
                         cursor.execute(f'SELECT project_id FROM updates WHERE project_id="{project_id}" AND title="{title}"')
                         if not cursor.fetchall():
                             list_updates.append((
                                 title,
-                                up_date['body'],
+                                body,
                                 up_date['comment_count'],
                                 up_date['like_count'],
                                 up_date['date'],
-                                up_date['author'],
+                                author,
                                 up_date['author_role'],
                                 project_id,
                             ))
@@ -312,14 +350,18 @@ def insert_data(creator, project, updates, comments, rewards, logger):
                     list_comments = []
                     for comment in comments:
                         project_id = comment['project_id']
-                        body = comment['body']
-                        author = comment['author']
-                        cursor.execute(f'SELECT project_id FROM comments WHERE project_id="{project_id}" AND body="{author}"')
+                        if comment['body']:
+                            body = remove_special_characters(comment['body'])
+                        else:
+                            body = None
+                        author = remove_special_characters(comment['author'])
+                        comment_id = comment['id']
+                        cursor.execute(f'SELECT project_id FROM comments WHERE project_id="{project_id}" AND id="{comment_id}"')
                         if not cursor.fetchall():
                             list_comments.append((
                                 author,
                                 body,
-                                comment['id'],
+                                comment_id,
                                 comment['parent_id'],
                                 comment['comment_type'],
                                 project_id,
@@ -337,15 +379,29 @@ def insert_data(creator, project, updates, comments, rewards, logger):
                     list_rewards = []
                     for reward in rewards:
                         project_id = reward['project_id']
-                        title = reward['title']
-                        pledge_minimum = reward['pledge_minimum']
-                        cursor.execute(f'SELECT project_id FROM rewards WHERE project_id="{project_id}" AND title="{pledge_minimum}"')
+                        if reward['title']:
+                            title = remove_special_characters(reward['title'])
+                        else:
+                            title = None
+                        
+                        if reward['description']:
+                            description = remove_special_characters(reward['description'])
+                        else:
+                            description = None
+                            
+                        if title:
+                            cursor.execute(f'SELECT project_id FROM rewards WHERE project_id="{project_id}" AND title="{title}"')
+                        elif description:
+                            cursor.execute(f'SELECT project_id FROM rewards WHERE project_id="{project_id}" AND description="{description}"')
+                        else:
+                             cursor.execute(f'SELECT project_id FROM rewards WHERE project_id="{project_id}"')
+
                         if not cursor.fetchall():
                             list_rewards.append((
                                 title,
-                                reward['description'],
+                                description,
                                 reward['reward_status'],
-                                pledge_minimum,
+                                reward['pledge_minimum'],
                                 reward['ship_status'],
                                 reward['ship_to'],
                                 reward['estimated_delivery'],
@@ -362,4 +418,70 @@ def insert_data(creator, project, updates, comments, rewards, logger):
                         logger.info(f'None list rewards to insert database')
 
     except Error as e:
-        print(e)
+        logger.error(f'MYSQL error: {e}')
+
+def fetch_all_crawler(crawler, logger):
+    crawlers = None
+    try:
+        with connect(
+            host=db_host,
+            user=db_user,
+            password=db_password,
+            database=db_name,
+            cursorclass=pymysql.cursors.DictCursor
+        ) as connection:
+            query = """
+                    SELECT category_id, category_name, state, page_number, project_id, limit_status, crawl_id FROM crawl_status WHERE crawler = %s
+                """
+            with connection.cursor() as cursor:
+                cursor.execute(query, crawler)
+                crawlers = cursor.fetchall() 
+    except Error as e:
+        if logger:
+            logger.error(f'MYSQL error: {e}')
+        else:
+            print(f'MYSQL error: {e}')
+    
+    return crawlers
+
+def fetch_crawl(crawl_id, logger):
+    crawler = None
+    try:
+        with connect(
+            host=db_host,
+            user=db_user,
+            password=db_password,
+            database=db_name,
+            cursorclass=pymysql.cursors.DictCursor
+        ) as connection:
+            query = """
+                    SELECT page_number, project_id, limit_status FROM crawl_status WHERE crawl_id = %s
+                """
+            with connection.cursor() as cursor:
+                cursor.execute(query, crawl_id)
+                crawler = cursor.fetchone() 
+    except Error as e:
+        if logger:
+            logger.error(f'MYSQL error: {e}')
+        else:
+            print(f'MYSQL error: {e}')
+    
+    return crawler
+
+def update_crawl_status(data: tuple, logger):
+    try:
+        with connect(
+            host=db_host,
+            user=db_user,
+            password=db_password,
+            database=db_name,
+            cursorclass=pymysql.cursors.DictCursor
+        ) as connection:
+            query = """
+                UPDATE crawl_status SET page_number = %s , project_id = %s, limit_status = %s WHERE crawl_id = %s
+                """
+            with connection.cursor() as cursor:
+                cursor.execute(query, data)
+                connection.commit() 
+    except Error as e:
+        logger.error(f'MYSQL error: {e}')

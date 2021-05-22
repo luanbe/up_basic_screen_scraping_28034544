@@ -64,6 +64,14 @@ def check_and_create_file(file_path):
                 raise
     if os.path.isfile(file_path) is not True:
         f = open(file_path, "w")
+
+def check_and_create_folder(path):
+    if not os.path.exists(os.path.dirname(path)):
+        try:
+            os.makedirs(os.path.dirname(path))
+        except OSError as exc: # Guard against race condition
+            if exc.errno != errno.EEXIST:
+                raise
     
 def save_excel(df, file_path, logger=None, message=None):
     df.to_excel(file_path, engine='openpyxl', index=False)
@@ -108,9 +116,21 @@ def random_user_agent():
     return user_agent_rotator.get_random_user_agent()
 
 def convert_html_to_text(html_data):
-    soup = BeautifulSoup(html_data, 'lxml')
+    soup = BeautifulSoup(html_data.encode('ascii', errors='ignore').decode("utf-8"), 'lxml')
     return soup.text.strip()
 
 def convert_html_to_json(html_data, browser):
+    # Load json data from chrome driver
     content = browser.find_element_by_tag_name('pre').text
+
+    # Load json data from firefox driver
+    # content = browser.find_element_by_id('json').text
     return json.loads(content)
+
+def remove_special_characters(text):
+    if text:
+        text.encode('ascii', errors='ignore').decode("utf-8")
+        # Remove " character
+        text = text.replace('"','')
+    
+    return text

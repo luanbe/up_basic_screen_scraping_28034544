@@ -1,0 +1,62 @@
+######################### Guides on how to run script #########################
+
+1. Download & Install Python on your windows or linux system
+Windows: https://www.python.org/downloads/
+Linux: Create script to install on linux from here https://gist.github.com/luantechrius/ff14407bca47e4f4ce41aaa2278ef625
+
+2. Create Python environment
+Going to project folder. Use command line on your windows or linux such as:
+
+python -m venv env
+
+3. Install Python packages:
+Install all packages by command line such as:
+Windows:
+.\env\Scripts\activate
+pip install -r .\requirements.txt
+
+Linux:
+source env/bin/activate
+pip3 install -r .\requirements.txt
+
+4. Config file settings
+Go to settings.py file and change database connect
+
+5. Step by Step to run script
+# First, you need to go Python environment before running your script
+Windows:
+.\env\Scripts\activate
+
+Linux:
+source env/bin/activate
+
+# Create database before running script
+Windows:
+python .\create_database.py 
+
+Linux:
+python3 .\create_database.py
+
+# Go to crawl_staus.xlsx to add columns require such as:
+Category: Name of Category
+ID: Id of category. Go to https://www.kickstarter.com/discover/advanced?category_id=20&sort=magic&seed=2702792&page=1 click at per category filter to find category_id
+Parent ID: If this is sub-category, fill category ID
+State: Filter type None(Not fill), live and successful
+Page No.: Always begin is 1. The crawler will crawl data at first Page
+project_id: not fill
+Limit Status:  Always is FALSE
+VPS: This is name of crawer that you edit in file settings.py. If you want run multiple crawler on your computer, add mutiple same crawler name.
+
+# After add data in file crawl_staus.xlsx . Run file update_crawl_status.py for updating data to database server
+Windows:
+python .\update_crawl_status.py 
+
+Linux:
+python3 .\update_crawl_status.py
+
+# Run script to crawl data
+Windows:
+python .\crawl.py 
+
+Linux:
+python3 .\crawl.py

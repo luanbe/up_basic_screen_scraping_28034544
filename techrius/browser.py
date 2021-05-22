@@ -1,7 +1,8 @@
-from seleniumwire.undetected_chromedriver.v2 import Chrome, ChromeOptions
+# from seleniumwire.undetected_chromedriver.v2 import Chrome, ChromeOptions
+from seleniumwire.undetected_chromedriver import Chrome, ChromeOptions
 from .utils import check_and_create_file
 from time import sleep
-
+from pathlib import Path
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -23,6 +24,7 @@ class SeleniumHander:
             proxy_password = None,
             limit_scropes = None,
             exclude_hosts = None,
+            user_data_dir = None,
         ):
         """Starts local session for a selenium server. Default case scenario."""
 
@@ -37,11 +39,18 @@ class SeleniumHander:
         chrome_options = ChromeOptions()
         seleniumwire_options = {}
         chrome_options.add_argument('--ignore-certificate-errors')
+        chrome_options.add_argument('--no-sandbox')
         chrome_options.add_argument('--disable-notifications')
         chrome_options.add_argument('--disable-gpu')
         chrome_options.add_argument('--mute-audio')
         chrome_options.add_argument('--disable-dev-shm-usage')
         chrome_options.add_argument('--disable-blink-features=AutomationControlled')
+        
+        # Path to your chrome profile
+        if user_data_dir:
+            user_data_dir = Path(user_data_dir)
+            chrome_options.add_argument(f'--user-data-dir={user_data_dir}')
+            chrome_options.add_argument('--profile-directory=Default')
 
         # Disable Image loading, this will replace with request_interceptor
         # prefs = {"profile.managed_default_content_settings.images": 2}
@@ -105,6 +114,7 @@ class SeleniumHander:
                 request.abort()
 
     def http_status_code(self, url):
+        status_code = None
         for request in self.driver.requests:
                 if request.response:
                     if request.url == url:
