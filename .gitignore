@@ -129,3 +129,4 @@ dmypy.json
 .pyre/
 assets/cookies/
 mysql_data/
+logs/*
