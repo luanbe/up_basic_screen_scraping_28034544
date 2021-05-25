@@ -55,7 +55,7 @@ def create_table(logger):
                     location VARCHAR(200),
                     creator_id INT,
                     url VARCHAR(1000),
-                    story TEXT,
+                    story LONGTEXT,
                     PRIMARY KEY (project_id),
                     FOREIGN KEY (creator_id) REFERENCES creators(creator_id)
                 )
@@ -72,6 +72,8 @@ def create_table(logger):
                     backed_project INT,
                     join_date DATETIME,
                     biography TEXT,
+                    crawl_status BOOLEAN DEFAULT FALSE,
+                    active_projects BOOLEAN DEFAULT TRUE,
                     PRIMARY KEY (creator_id)
                 )
                 """
@@ -483,5 +485,49 @@ def update_crawl_status(data: tuple, logger):
             with connection.cursor() as cursor:
                 cursor.execute(query, data)
                 connection.commit() 
+    except Error as e:
+        logger.error(f'MYSQL error: {e}')
+
+
+def fetch_creators_not_crawl(logger):
+    creators = None
+    try:
+        with connect(
+            host=db_host,
+            user=db_user,
+            password=db_password,
+            database=db_name,
+            cursorclass=pymysql.cursors.DictCursor
+        ) as connection:
+            query = """
+                    SELECT creator_id FROM creators WHERE crawl_status=False and active_projects=True
+                """
+            with connection.cursor() as cursor:
+                cursor.execute(query)
+                creators = cursor.fetchall()
+    except Error as e:
+        if logger:
+            logger.error(f'MYSQL error: {e}')
+        else:
+            print(f'MYSQL error: {e}')
+    
+    return creators
+
+def update_crawl_creator_status(creator_id, crawl_status, active_projects, logger):
+    try:
+        with connect(
+            host=db_host,
+            user=db_user,
+            password=db_password,
+            database=db_name,
+            cursorclass=pymysql.cursors.DictCursor
+        ) as connection:
+            with connection.cursor() as cursor:
+                query_update = """
+                    UPDATE creators SET crawl_status = %s, active_projects = %s WHERE creator_id = %s
+                """
+                cursor.execute(query_update, (crawl_status, active_projects, creator_id))
+                connection.commit() 
+
     except Error as e:
         logger.error(f'MYSQL error: {e}')

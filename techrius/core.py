@@ -41,7 +41,7 @@ class TSpider:
             limit_scropes: list = None,
             exclude_hosts: list= None,
             crawl_type=None,
-            use_tor=False,
+            use_tor: bool = False,
             tor_password=None,
             tor_port=None
         ):
@@ -250,26 +250,20 @@ class TSpider:
         #     return False
         session = requests.Session()
         session.headers = self.headers
-        if self.proxy_username and self.proxy_password and self.proxy_address and self.proxy_port:
+        if self.proxy_address and self.proxy_port:
             session.proxies = {
                 'http': f'{self.proxy_address}:{self.proxy_port}',
                 'https': f'{self.proxy_address}:{self.proxy_port}'
             }
             if self.proxy_username and self.proxy_password:
                 session.auth = HTTPProxyAuth(self.proxy_username, self.proxy_password)
-        elif self.use_tor:
-            if self.proxy_address and self.proxy_port:
-                session.proxies = {
-                    'http': f'{self.proxy_address}:{self.proxy_port}',
-                    'https': f'{self.proxy_address}:{self.proxy_port}',
-                }
-                # location = session.get('https://api.myip.com/')
-                # loc = location.json()
-                # loc_ip = loc['ip']
-                # loc_country = loc['country']
-                # self.logger.info(f'IP Tor: {loc_ip} | Country: {loc_country}')
+
+            if self.use_tor:
+                self.logger.info(f'You use Tor proxy: {self.proxy_address}:{self.proxy_port}')
             else:
-                self.logger.error('The Tor Proxy can not use because it not have proxy address and port')
+                self.logger.info(f'You use proxy: {self.proxy_address}:{self.proxy_port}')
+        else:
+            self.logger.warning('You don\'t use proxies at this time....')
 
         return session
 
@@ -359,7 +353,6 @@ class TSpider:
         while True:
             type_crawl = 'List Projects Category'
             has_more = None
-            url_api = 'https://www.kickstarter.com/graph'
             #### Scrape categories ######
             if state is None:
                 s_state = ''
@@ -420,136 +413,12 @@ class TSpider:
                         project_count = 0
 
                     for project in projects[project_count:]:
-                        # slug url & url
-                        url = project.get('urls').get('web').get('project')
-                        url_reward = project.get('urls').get('web').get('rewards')
-                        url_api_user = project.get('creator').get('urls').get('api').get('user')
-                        creator_slug = project.get('creator').get('slug')
-                        project_slug = project.get('slug')
-                        full_project_slug = f'{creator_slug}/{project_slug}'
-                        
-                        project_id = project.get('profile').get('project_id')
-
-                        # Format time
-                        format_time = '%Y-%m-%d'
-                        now_utc = datetime.utcnow()
-                        deadline = datetime.utcfromtimestamp(project.get('deadline'))
-                        launched = datetime.utcfromtimestamp(project.get('launched_at'))
-                        days_to_go_cal = deadline.date() - now_utc.date()
-                        
-                        # Cal day to go
-                        if days_to_go_cal.days < 0:
-                            days_to_go = 0
-                        else:
-                            days_to_go = days_to_go_cal.days
-
-                        # Crawl Details:
-                        if crawl_type == 'selenium':
-                            story = self.crawl_story(url, url_api)
-                            creator = self.crawl_creator(url, url_api_user)
-                            updates = self.crawl_updates(url, url_api, project_id)
-                            comments = self.crawl_comments(url, url_api, project_id)
-                        elif crawl_type== 'http_request':
-                            api_session = self.get_session_http_requests(url)
-                            if api_session:
-                                http_crawl_story = self.http_crawl_story(url,url_api, api_session, full_project_slug)
-                                if http_crawl_story[1] is False:
-                                    story = None
-                                else:
-                                    story = http_crawl_story[0]
-
-                                http_crawl_creator = self.http_crawl_creator(url, url_api, url_api_user, api_session, full_project_slug)
-                                if http_crawl_creator[1] is False:
-                                    creator = None
-                                else:
-                                    creator = http_crawl_creator[0]
-
-                                http_crawl_updates =  self.http_crawl_updates(api_session, url, url_api, project_slug, project_id)
-                                if http_crawl_updates[1] is False:
-                                    updates = None
-                                else:
-                                    updates = http_crawl_updates[0]
-                            
-                                http_crawl_comments =  self.http_crawl_comments(api_session, url, url_api, project_id)
-                                if http_crawl_comments[1] is False:
-                                    comments = None
-                                else:
-                                    comments = http_crawl_comments[0]
-                        else:
-                            api_session = self.get_session_http_requests(url)
-                            if api_session:
-                                http_crawl_story = self.http_crawl_story(url,url_api, api_session, full_project_slug)
-                                if http_crawl_story[1] is False:
-                                    story = self.crawl_story(url, url_api)
-                                else:
-                                    story = http_crawl_story[0]
-
-                                http_crawl_creator = self.http_crawl_creator(url, url_api, url_api_user, api_session, full_project_slug)
-                                if http_crawl_creator[1] is False:
-                                    creator = self.crawl_creator(url, url_api_user)
-                                else:
-                                    creator = http_crawl_creator[0]
-
-                                http_crawl_updates =  self.http_crawl_updates(api_session, url, url_api, project_slug, project_id)
-                                if http_crawl_updates[1] is False:
-                                    updates = self.crawl_updates(url, url_api, project_id)
-                                else:
-                                    updates = http_crawl_updates[0]
-                            
-                                http_crawl_comments =  self.http_crawl_comments(api_session, url, url_api, project_id)
-                                if http_crawl_comments[1] is False:
-                                    comments = self.crawl_comments(url, url_api, project_id)
-                                else:
-                                    comments = http_crawl_comments[0]
-                            else:
-                                story = self.crawl_story(url, url_api)
-                                creator = self.crawl_creator(url, url_api_user)
-                                updates = self.crawl_updates(url, url_api, project_id)
-                                comments = self.crawl_comments(url, url_api, project_id)
-                            
-
-                        rewards = self.crawl_rewards(url_reward, project_id, crawl_type)
-
-                        if project.get('goal') and project.get('usd_exchange_rate'):
-                            goal = project.get('goal') * project.get('usd_exchange_rate')
-                        else:
-                            goal = None
-
-                        if project.get('location'):
-                            location = project.get('location').get('displayable_name')
-                        else:
-                            location = None
-
-                        results = {
-                                'project_id': project_id,
-                                'title': project.get('name').strip(),
-                                'blurb': project.get('blurb').strip(),
-                                'feature_image': project.get('profile').get('feature_image_attributes').get('image_urls').get('default'),
-                                'category': project.get('category').get('name'),
-                                'category_id': project.get('category').get('id'),
-                                'parent_category': project.get('category').get('parent_name'),
-                                'parent_category_id': project.get('category').get('parent_id'),
-                                'currency': project.get('current_currency'),
-                                'pledged': project.get('converted_pledged_amount'),
-                                'goal': goal, 
-                                'backers': project.get('backers_count'),
-                                'day_to_go': days_to_go,
-                                'launched': launched.strftime(format_time),
-                                'deadline': deadline.strftime(format_time),
-                                'location': location,
-                                'creator_id': project.get('creator').get('id'),
-                                'url': url,
-                                'story': story,
-                        }
-                       
-                        
-                        insert_data(creator, results, updates, comments, rewards, self.logger)
+                        project_id = self.crawl_project(project, crawl_type)
                         update_crawl_status((current_page, project_id, reach_limit_page, crawl_id), self.logger)
-                            
                         item_count += 1
                         self.logger.info(f'Website crawl total: {item_count} | Current pages: {current_page}')
                 else:
-                    self.logger.warning(f'Type: Crawl Projects of Category | Status: Not found the project| URL: {url_page}')
+                    self.logger.warning(f'Type: Crawl Projects of Category | Status: Not found the projects | URL: {url_page}')
                     reach_limit_page = True
                     break
                 if has_more:
@@ -567,6 +436,219 @@ class TSpider:
         
         update_crawl_status((current_page, project_id, reach_limit_page, crawl_id), self.logger)
         return current_page, reach_limit_page, project_id
+
+    def crawl_projects_creator(self, creator_id):
+        crawl_type = self.crawl_type
+        type_crawl = 'Crawl Creator Projects'
+        crawl_status = False
+        active_projects = True
+        list_project = []
+        api_session = self.api_session()
+
+        backed_projects = self.crawl_backed_creator(creator_id, api_session)
+        if backed_projects:
+            list_project = backed_projects + list_project
+        
+        created_projects = self.crawl_created_creator(creator_id, api_session)
+        if created_projects:
+            list_project = created_projects + list_project
+
+        if list_project:
+            self.logger.info(f'Type: {type_crawl} | Status: Found {len(list_project)} projects | Creator ID: {creator_id}')
+            for project in list_project:
+                project_id = self.crawl_project(project, crawl_type, creator_id)
+                if project_id:
+                    crawl_status = True
+                    self.logger.info(f'Type: {type_crawl} | Status: Success to crawled project ID ({project_id}) | Creator ID: {creator_id}')
+                else:
+                    self.logger.warning(f'Type: {type_crawl} | Status: Fails to crawled project ID ({project_id}) | Creator ID: {creator_id}')
+        else:
+            self.logger.warning(f'Type: {type_crawl} | Status: Not found the projects | Creator ID: {creator_id}')
+            active_projects = False
+        
+        return crawl_status, active_projects
+
+    def crawl_created_creator(self, creator_id, api_session):
+        type_crawl = 'Crawl Created Creator'
+        profile_url = f'https://www.kickstarter.com/profile/{creator_id}/created'
+        request_http = self.try_request(session=api_session, method='get', url=profile_url, type_name=type_crawl)
+        if request_http[1]:
+            soup = BeautifulSoup(request_http[0].text, 'lxml')
+            projects = soup.find('div', id='react-profile-created')
+            if projects:
+                self.logger.info(f'Type: {type_crawl} | Status: Crawled {type_crawl} data (HTTP request)|  URL: {profile_url}')
+                return json.loads(projects.get('data-projects'))
+            else:
+                self.logger.warning(f'Type: {type_crawl} | Status: Not found {type_crawl} data (HTTP request)|  URL: {profile_url}')
+                return None
+        return None
+
+    def crawl_backed_creator(self, creator_id, api_session):
+        type_crawl = 'Crawl Backed Creator'
+        list_project = []
+        next_page = None
+        crawl_status = True
+        while True:
+            if not next_page:
+                profile_url = f'https://www.kickstarter.com/profile/{creator_id}'
+            else:
+                profile_url = next_page
+
+            request_http = self.try_request(session=api_session, method='get', url=profile_url, type_name=type_crawl)
+            if request_http[1]:
+                soup = BeautifulSoup(request_http[0].text, 'lxml')
+                projects = soup.select('#profile_projects_list ul li .react-user-prof-card')
+                if projects:
+                    for project in projects:
+                        list_project.append(json.loads(project['data-project']))
+
+                    next_page_element = soup.find('a', class_='next_page')
+                    if next_page_element and next_page_element.get('href'):
+                        next_page = 'https://www.kickstarter.com/' + next_page_element.get('href')
+                    else:
+                        crawl_status = False
+                else:
+                    crawl_status = False
+            else:
+                crawl_status = False
+
+            if crawl_status == False:
+                break
+        
+        if list_project:
+            self.logger.info(f'Type: {type_crawl} | Status: Crawled {type_crawl} data (HTTP request)|  URL: {profile_url}')
+        else:
+            self.logger.warning(f'Type: {type_crawl} | Status: Not found {type_crawl} data (HTTP request)|  URL: {profile_url}')
+        
+        return list_project
+
+    def crawl_project(self, project, crawl_type, creator_id=None):
+        url_api = 'https://www.kickstarter.com/graph'
+        # slug url & url
+        url = project.get('urls').get('web').get('project')
+        url_reward = project.get('urls').get('web').get('rewards')
+        url_api_user = project.get('creator').get('urls').get('api').get('user')
+        creator_slug = project.get('creator').get('slug')
+        if creator_slug is None and creator_id:
+            creator_slug = creator_id
+        project_slug = project.get('slug')
+        full_project_slug = f'{creator_slug}/{project_slug}'
+        
+        project_id = project.get('profile').get('project_id')
+
+        # Format time
+        format_time = '%Y-%m-%d'
+        now_utc = datetime.utcnow()
+        deadline = datetime.utcfromtimestamp(project.get('deadline'))
+        launched = datetime.utcfromtimestamp(project.get('launched_at'))
+        days_to_go_cal = deadline.date() - now_utc.date()
+        
+        # Cal day to go
+        if days_to_go_cal.days < 0:
+            days_to_go = 0
+        else:
+            days_to_go = days_to_go_cal.days
+
+        # Crawl Details:
+        if crawl_type == 'selenium':
+            story = self.crawl_story(url, url_api)
+            creator = self.crawl_creator(url, url_api_user)
+            updates = self.crawl_updates(url, url_api, project_id)
+            comments = self.crawl_comments(url, url_api, project_id)
+        elif crawl_type== 'http_request':
+            api_session = self.get_session_http_requests(url)
+            if api_session:
+                http_crawl_story = self.http_crawl_story(url,url_api, api_session, full_project_slug)
+                if http_crawl_story[1] is False:
+                    story = None
+                else:
+                    story = http_crawl_story[0]
+
+                http_crawl_creator = self.http_crawl_creator(url, url_api, url_api_user, api_session, full_project_slug)
+                if http_crawl_creator[1] is False:
+                    creator = None
+                else:
+                    creator = http_crawl_creator[0]
+
+                http_crawl_updates =  self.http_crawl_updates(api_session, url, url_api, project_slug, project_id)
+                if http_crawl_updates[1] is False:
+                    updates = None
+                else:
+                    updates = http_crawl_updates[0]
+            
+                http_crawl_comments =  self.http_crawl_comments(api_session, url, url_api, project_id)
+                if http_crawl_comments[1] is False:
+                    comments = None
+                else:
+                    comments = http_crawl_comments[0]
+        else:
+            api_session = self.get_session_http_requests(url)
+            if api_session:
+                http_crawl_story = self.http_crawl_story(url,url_api, api_session, full_project_slug)
+                if http_crawl_story[1] is False:
+                    story = self.crawl_story(url, url_api)
+                else:
+                    story = http_crawl_story[0]
+
+                http_crawl_creator = self.http_crawl_creator(url, url_api, url_api_user, api_session, full_project_slug)
+                if http_crawl_creator[1] is False:
+                    creator = self.crawl_creator(url, url_api_user)
+                else:
+                    creator = http_crawl_creator[0]
+
+                http_crawl_updates =  self.http_crawl_updates(api_session, url, url_api, project_slug, project_id)
+                if http_crawl_updates[1] is False:
+                    updates = self.crawl_updates(url, url_api, project_id)
+                else:
+                    updates = http_crawl_updates[0]
+            
+                http_crawl_comments =  self.http_crawl_comments(api_session, url, url_api, project_id)
+                if http_crawl_comments[1] is False:
+                    comments = self.crawl_comments(url, url_api, project_id)
+                else:
+                    comments = http_crawl_comments[0]
+            else:
+                story = self.crawl_story(url, url_api)
+                creator = self.crawl_creator(url, url_api_user)
+                updates = self.crawl_updates(url, url_api, project_id)
+                comments = self.crawl_comments(url, url_api, project_id)
+            
+
+        rewards = self.crawl_rewards(url_reward, project_id, crawl_type)
+
+        if project.get('goal') and project.get('usd_exchange_rate'):
+            goal = project.get('goal') * project.get('usd_exchange_rate')
+        else:
+            goal = None
+
+        if project.get('location'):
+            location = project.get('location').get('displayable_name')
+        else:
+            location = None
+
+        results = {
+                'project_id': project_id,
+                'title': project.get('name').strip(),
+                'blurb': project.get('blurb').strip(),
+                'feature_image': project.get('profile').get('feature_image_attributes').get('image_urls').get('default'),
+                'category': project.get('category').get('name'),
+                'category_id': project.get('category').get('id'),
+                'parent_category': project.get('category').get('parent_name'),
+                'parent_category_id': project.get('category').get('parent_id'),
+                'currency': project.get('current_currency'),
+                'pledged': project.get('converted_pledged_amount'),
+                'goal': goal, 
+                'backers': project.get('backers_count'),
+                'day_to_go': days_to_go,
+                'launched': launched.strftime(format_time),
+                'deadline': deadline.strftime(format_time),
+                'location': location,
+                'creator_id': project.get('creator').get('id'),
+                'url': url,
+                'story': story,
+        }
+        insert_data(creator, results, updates, comments, rewards, self.logger)
+        return project_id
 
     def http_crawl_story(self, url, url_api, session, full_slug):
         """ ++++++++++++ Crawling story in project campaign ++++++++++++"""
@@ -637,7 +719,6 @@ class TSpider:
             try:
                 # Check nested json data
                 story = data.get('data').get('project').get('story')
-    
                 if story:
                     return story
             except:
@@ -771,7 +852,6 @@ class TSpider:
             return json_data['project']['verifiedIdentity']
         else:
             return None
-
 
     def crawl_updates(self, url, url_api, project_id):
         url = re.sub(r'\?.+', '', url)

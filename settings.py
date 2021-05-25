@@ -1,6 +1,10 @@
 ##### Crawler Settings #####
 # Crawler name: This is name of crawler will connect database and check categories to crawl
-crawler_name = "tor_1"
+crawler_name = "tor_5"
+
+# Number of crawler run in background
+# This is apply for crawl projects creator
+no_crawler = 25
 
 # Type crawler will run crawl data: both | http_request | selenium
 # http_request: Only send HTTP request and crawl API
@@ -31,7 +35,7 @@ tor_port=9051
 
 
 ##### Database Settings #####
-db_host = 'localhost'
-db_user = 'root'
-db_password = 'Z19874149'
+db_host = '207.148.66.216'
+db_user = 'tor_5'
+db_password = 'Zipphong18091987@@'
 db_name = 'kickstarter_com'
