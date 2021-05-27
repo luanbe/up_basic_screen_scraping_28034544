@@ -24,17 +24,20 @@ def crawl_projects_creator(thread_name):
             crawl_type=settings.crawl_type,
     )
     while True:
-        creators  = fetch_creators_not_crawl(logger=None)
-        if creators:
-            creator = random.choice(creators)
-            creator_id = creator['creator_id']
-            result = session.crawl_projects_creator(creator_id)
-            crawl_status = result[0]
-            active_projects = result[1]
-            update_crawl_creator_status(creator_id, crawl_status, active_projects, logger=session.logger)
-        else:
-            print('khong co creators')
-            break
+        try:
+            creators  = fetch_creators_not_crawl(logger=None)
+            if creators:
+                creator = random.choice(creators)
+                creator_id = creator['creator_id']
+                result = session.crawl_projects_creator(creator_id)
+                crawl_status = result[0]
+                active_projects = result[1]
+                update_crawl_creator_status(creator_id, crawl_status, active_projects, logger=session.logger)
+            else:
+                print('khong co creators')
+                break
+        except:
+            pass
 
 
 if __name__ == '__main__':
