@@ -470,6 +470,30 @@ def fetch_crawl(crawl_id, logger):
     
     return crawler
 
+def check_project_id(project_id, logger):
+    project = None
+    try:
+        with connect(
+            host=db_host,
+            user=db_user,
+            password=db_password,
+            database=db_name,
+            cursorclass=pymysql.cursors.DictCursor
+        ) as connection:
+            query = """
+                    SELECT project_id from projects where project_id= %s
+                """
+            with connection.cursor() as cursor:
+                cursor.execute(query, project_id)
+                project = cursor.fetchone() 
+    except Error as e:
+        if logger:
+            logger.error(f'MYSQL error: {e}')
+        else:
+            print(f'MYSQL error: {e}')
+    
+    return project
+
 def update_crawl_status(data: tuple, logger):
     try:
         with connect(
