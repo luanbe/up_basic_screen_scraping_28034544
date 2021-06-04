@@ -60,3 +60,11 @@ python .\crawl.py
 
 Linux:
 python3 .\crawl.py
+
+
+# If you want to crawl projects from creators, run file crawl_projects_creator.py
+Windows:
+python .\crawl_projects_creator.py 
+
+Linux:
+python3 .\crawl_projects_creator.py
