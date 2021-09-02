@@ -127,6 +127,12 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-assets/cookies/
-mysql_data/
+
+# Detahub Spider settings
+.devcontainer
+.vscode
+.envs
 logs/*
+assets/*
+dbs/
+twistd.pid
